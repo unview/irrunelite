@@ -63,6 +63,9 @@ public class PlayerIndicatorsPlugin extends Plugin
 	private PlayerIndicatorsConfig config;
 
 	@Inject
+	private PlayerIndicatorsService service;
+
+	@Inject
 	private PlayerIndicatorsOverlay playerIndicatorsOverlay;
 
 	@Inject
@@ -111,10 +114,12 @@ public class PlayerIndicatorsPlugin extends Plugin
 			final Player localPlayer = client.getLocalPlayer();
 			Player[] players = client.getCachedPlayers();
 			Player player = null;
+			String player2 = null;
 
 			if (identifier >= 0 && identifier < players.length)
 			{
 				player = players[identifier];
+				player2 = players[identifier].getName();
 			}
 
 			if (player == null)
@@ -143,9 +148,19 @@ public class PlayerIndicatorsPlugin extends Plugin
 			{
 				color = config.getTeamMemberColor();
 			}
-			else if (config.highlightNonClanMembers() && !player.isClanMember())
+			else if (config.highlightNonClanMembers() && !player.isClanMember()) {
+				color = config.getNonClanMemberColor();
+			}
+			else if (config.highlightNonClanMembers() && !player.isClanMember() && !config.hideNAP())
 			{
 				color = config.getNonClanMemberColor();
+			}
+			else if (config.highlightNonClanMembers() && !player.isClanMember() && config.hideNAP())
+			{
+				if (service.canAttack(player.getCombatLevel()))
+				{
+					color = config.getNonClanMemberColor();
+				}
 			}
 
 			if (image != -1 || color != null)
