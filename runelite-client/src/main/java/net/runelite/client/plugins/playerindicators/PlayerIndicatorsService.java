@@ -35,7 +35,8 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 
 @Singleton
-public class PlayerIndicatorsService {
+public class PlayerIndicatorsService
+{
 	private final Client client;
 	private final PlayerIndicatorsConfig config;
 
@@ -118,7 +119,8 @@ public class PlayerIndicatorsService {
 			{
 				return true;
 			}
-		} else if (isWidgetVisible(client.getWidget(WidgetInfo.WILDERNESS_CONTAINER)))
+		}
+		else if (isWidgetVisible(client.getWidget(WidgetInfo.WILDERNESS_CONTAINER)))
 		{
 			int wildLvl;
 			try

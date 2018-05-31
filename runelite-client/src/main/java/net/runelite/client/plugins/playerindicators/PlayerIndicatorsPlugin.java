@@ -148,7 +148,8 @@ public class PlayerIndicatorsPlugin extends Plugin
 			{
 				color = config.getTeamMemberColor();
 			}
-			else if (config.highlightNonClanMembers() && !player.isClanMember()) {
+			else if (config.highlightNonClanMembers() && !player.isClanMember())
+			{
 				color = config.getNonClanMemberColor();
 			}
 			else if (config.highlightNonClanMembers() && !player.isClanMember() && !config.hideNAP())

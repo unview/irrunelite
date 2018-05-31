@@ -65,9 +65,8 @@ public class InfoPanel extends PluginPanel
 	private static final String RUNELITE_LOGIN = "https://runelite_login/";
 
 	private static final ImageIcon ARROW_RIGHT_ICON;
-	private static final ImageIcon GITHUB_ICON;
+	private static final ImageIcon FORUMS_ICON;
 	private static final ImageIcon DISCORD_ICON;
-	private static final ImageIcon PATREON_ICON;
 
 	private final JLabel loggedLabel = new JLabel();
 	private final JRichTextPane emailLabel = new JRichTextPane();
@@ -95,9 +94,8 @@ public class InfoPanel extends PluginPanel
 			synchronized (ImageIO.class)
 			{
 				ARROW_RIGHT_ICON = new ImageIcon(ImageIO.read(InfoPanel.class.getResourceAsStream("arrow_right.png")));
-				GITHUB_ICON = new ImageIcon(ImageIO.read(InfoPanel.class.getResourceAsStream("github_icon.png")));
+				FORUMS_ICON = new ImageIcon(ImageIO.read(InfoPanel.class.getResourceAsStream("forums_icon.png")));
 				DISCORD_ICON = new ImageIcon(ImageIO.read(InfoPanel.class.getResourceAsStream("discord_icon.png")));
-				PATREON_ICON = new ImageIcon(ImageIO.read(InfoPanel.class.getResourceAsStream("patreon_icon.png")));
 			}
 		}
 		catch (IOException e)
@@ -119,7 +117,7 @@ public class InfoPanel extends PluginPanel
 
 		final Font smallFont = FontManager.getRunescapeSmallFont();
 
-		JLabel version = new JLabel(htmlLabel("RuneLite version: ", runeLiteProperties.getVersion()));
+		JLabel version = new JLabel(htmlLabel("Client Version: ", runeLiteProperties.getVersion()));
 		version.setFont(smallFont);
 
 		JLabel revision = new JLabel();
@@ -131,7 +129,7 @@ public class InfoPanel extends PluginPanel
 			engineVer = String.format("Rev %s", runeLiteProperties.getRunescapeVersion());
 		}
 
-		revision.setText(htmlLabel("Oldschool revision: ", engineVer));
+		revision.setText(htmlLabel("OSRS Revision: ", engineVer));
 
 		loggedLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		loggedLabel.setFont(smallFont);
@@ -162,9 +160,8 @@ public class InfoPanel extends PluginPanel
 		actionsContainer.setBorder(new EmptyBorder(10, 0, 0, 0));
 		actionsContainer.setLayout(new GridLayout(3, 1, 0, 10));
 
-		actionsContainer.add(buildLinkPanel(GITHUB_ICON, "Report an issue or", "make a suggestion", runeLiteProperties.getGithubLink()));
+		actionsContainer.add(buildLinkPanel(FORUMS_ICON, "Don't forget to visit the", "Intense Redemption Forums", runeLiteProperties.getForumsLink()));
 		actionsContainer.add(buildLinkPanel(DISCORD_ICON, "Talk to us on our", "discord server", runeLiteProperties.getDiscordInvite()));
-		actionsContainer.add(buildLinkPanel(PATREON_ICON, "Become a patron to", "help support RuneLite", runeLiteProperties.getPatreonLink()));
 
 		add(versionPanel, BorderLayout.NORTH);
 		add(actionsContainer, BorderLayout.CENTER);
