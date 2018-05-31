@@ -22,7 +22,7 @@ public interface ClanChatConfig extends Config
 	)
 	default boolean showEnterAndLeaveMessages()
 	{
-		return true;
+		return false;
 	}
 
 	@ConfigItem(
