@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, DennisDeV <https://github.com/DevDennis>
+ * Copyright (c) 2018, Jos <Malevolentdev@gmail.com>
+ * Creation date : 26-5-2018
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +23,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.antidrag;
+package net.runelite.client.plugins.statusbars;
 
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 
 @ConfigGroup(
-	keyName = "antiDrag",
-	name = "Anti Drag",
-	description = "Configuration for the anti drag plugin (shift)"
+		keyName = "statusbars",
+		name = "Status bars",
+		description = "Configuration for the status bars plugin"
 )
-public interface AntiDragConfig extends Config
+public interface StatusBarsConfig extends Config
 {
 	@ConfigItem(
-		keyName = "dragDelay",
-		name = "Drag Delay",
-		description = "Configures the inventory drag delay in client ticks (20ms)",
-		position = 1
+			keyName = "enableCounter",
+			name = "Show Values",
+			description = "Adds a counter at top of the bar",
+			position = 1
 	)
-	default int dragDelay()
+	default boolean enableCounter()
 	{
-		return 600 / 20; // one game tick
+		return true;
 	}
 
 	@ConfigItem(
-		keyName = "dragDelay",
-		name = "",
-		description = ""
+			keyName = "enableSkillIcon",
+			name = "Show Icons",
+			description = "Adds skill icons at the top of the bar",
+			position = 2
 	)
-	void dragDelay(int delay);
+	default boolean enableSkillIcon()
+	{
+		return true;
+	}
 }

@@ -30,6 +30,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+import net.runelite.api.WorldType;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
 
 @Singleton
 public class PlayerIndicatorsService
@@ -47,7 +50,7 @@ public class PlayerIndicatorsService
 	public void forEachPlayer(final BiConsumer<Player, Color> consumer)
 	{
 		if (!config.highlightOwnPlayer() && !config.drawClanMemberNames()
-			&& !config.highlightFriends() && !config.highlightNonClanMembers())
+				&& !config.highlightFriends() && !config.highlightNonClanMembers())
 		{
 			return;
 		}
@@ -82,10 +85,70 @@ public class PlayerIndicatorsService
 			{
 				consumer.accept(player, config.getTeamMemberColor());
 			}
-			else if (config.highlightNonClanMembers() && !isClanMember)
+			else if (config.highlightNonClanMembers() && !isClanMember && !config.hideNAP())
 			{
 				consumer.accept(player, config.getNonClanMemberColor());
 			}
+			else if (config.highlightNonClanMembers() && !isClanMember && config.hideNAP())
+			{
+				if (canAttack(player.getCombatLevel()))
+				{
+					consumer.accept(player, config.getNonClanMemberColor());
+				}
+			}
 		}
+	}
+
+	public boolean canAttack(Integer target)
+	{
+		if (!client.getWorldType().contains(WorldType.PVP)
+				&& !client.getWorldType().contains(WorldType.PVP_HIGH_RISK)
+				&& !isWidgetVisible(client.getWidget(WidgetInfo.WILDERNESS_CONTAINER)))
+		{
+			return false;
+		}
+
+		int combat = client.getLocalPlayer().getCombatLevel();
+
+		if (client.getWorldType().contains(WorldType.PVP)
+				|| client.getWorldType().contains(WorldType.PVP_HIGH_RISK))
+		{
+			int minimumP = (combat - 15);
+			int maximumP = (combat + 15);
+			if (target <= maximumP && target >= minimumP)
+			{
+				return true;
+			}
+		}
+		else if (isWidgetVisible(client.getWidget(WidgetInfo.WILDERNESS_CONTAINER)))
+		{
+			int wildLvl;
+			try
+			{
+				wildLvl = Integer.valueOf(client.getWidget(WidgetInfo.WILDERNESS_LEVEL).getText().replace("Level: ", ""));
+			}
+			catch (Exception e)
+			{
+				wildLvl = 99;
+			}
+
+			if (wildLvl != 99)
+			{
+				int minimumW = (combat - wildLvl) <= 3 ? 3 : combat - wildLvl;
+				int maximumW = (combat + wildLvl) >= 126 ? 126 : combat + wildLvl;
+
+				if (target <= maximumW && target >= minimumW)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	private boolean isWidgetVisible(Widget widget)
+	{
+		return widget != null && !widget.isHidden();
 	}
 }

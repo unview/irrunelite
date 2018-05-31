@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, DennisDeV <https://github.com/DevDennis>
+ * Copyright (c) 2018, Jos <Malevolentdev@gmail.com>
+ * Creation date : 26-5-2018
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +23,26 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.antidrag;
+package net.runelite.client.plugins.statusbars;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import net.runelite.api.Point;
+import net.runelite.api.widgets.WidgetInfo;
 
-@ConfigGroup(
-	keyName = "antiDrag",
-	name = "Anti Drag",
-	description = "Configuration for the anti drag plugin (shift)"
-)
-public interface AntiDragConfig extends Config
+@Getter
+@AllArgsConstructor
+enum Viewport
 {
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "Drag Delay",
-		description = "Configures the inventory drag delay in client ticks (20ms)",
-		position = 1
-	)
-	default int dragDelay()
-	{
-		return 600 / 20; // one game tick
-	}
+	RESIZED_BOX(WidgetInfo.RESIZABLE_VIEWPORT_OLD_SCHOOL_BOX, WidgetInfo.RESIZABLE_VIEWPORT_INTERFACE_CONTAINER,
+			new Point(25,  16), new Point( 5,  16)),
+	RESIZED_BOTTOM(WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE, WidgetInfo.RESIZABLE_VIEWPORT_BOTTOM_LINE_INTERFACE_CONTAINER,
+			new Point(61,  8), new Point(35,  8)),
+	FIXED(WidgetInfo.FIXED_VIEWPORT, WidgetInfo.FIXED_VIEWPORT_INTERFACE_CONTAINER,
+			new Point(29, 20), new Point(9, 20));
 
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "",
-		description = ""
-	)
-	void dragDelay(int delay);
+	private WidgetInfo container;
+	private WidgetInfo viewport;
+	private Point offsetLeft;
+	private Point offsetRight;
 }

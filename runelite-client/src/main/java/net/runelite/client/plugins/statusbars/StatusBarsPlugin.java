@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018, DennisDeV <https://github.com/DevDennis>
+ * Copyright (c) 2018, Jos <Malevolentdev@gmail.com>
+ * Creation date : 26-5-2018
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,34 +23,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.antidrag;
+package net.runelite.client.plugins.statusbars;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
+import javax.inject.Inject;
+import com.google.inject.Provides;
+import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.Overlay;
 
-@ConfigGroup(
-	keyName = "antiDrag",
-	name = "Anti Drag",
-	description = "Configuration for the anti drag plugin (shift)"
+@PluginDescriptor(
+		name = "HP & Prayer Statusbars"
 )
-public interface AntiDragConfig extends Config
+public class StatusBarsPlugin extends Plugin
 {
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "Drag Delay",
-		description = "Configures the inventory drag delay in client ticks (20ms)",
-		position = 1
-	)
-	default int dragDelay()
+	@Inject
+	private StatusBarsOverlay overlay;
+
+	@Override
+	public Overlay getOverlay()
 	{
-		return 600 / 20; // one game tick
+		return overlay;
 	}
 
-	@ConfigItem(
-		keyName = "dragDelay",
-		name = "",
-		description = ""
-	)
-	void dragDelay(int delay);
+	@Provides
+	StatusBarsConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(StatusBarsConfig.class);
+	}
 }

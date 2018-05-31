@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
+ * Copyright (c) 2018, Andrew EP | ElPinche256 <https://github.com/ElPinche256>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.playerindicators;
+package net.runelite.client.plugins.warindicators;
 
 import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
@@ -30,8 +30,9 @@ import com.google.inject.Provides;
 import java.awt.Color;
 import java.util.Collection;
 import javax.inject.Inject;
-import net.runelite.api.ClanMemberRank;
-import static net.runelite.api.ClanMemberRank.UNRANKED;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import net.runelite.api.Client;
 import static net.runelite.api.MenuAction.FOLLOW;
 import static net.runelite.api.MenuAction.ITEM_USE_ON_PLAYER;
@@ -49,44 +50,38 @@ import net.runelite.api.MenuEntry;
 import net.runelite.api.Player;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.ClanManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.Overlay;
 
 @PluginDescriptor(
-	name = "Player Indicators"
+	name = "War Indicators"
 )
-public class PlayerIndicatorsPlugin extends Plugin
+
+public class WarIndicatorPlugin extends Plugin
 {
 	@Inject
-	private PlayerIndicatorsConfig config;
+	private WarIndicatorConfig config;
 
 	@Inject
-	private PlayerIndicatorsService service;
+	private WarIndicatorOverlay warIndicatorOverlay;
 
 	@Inject
-	private PlayerIndicatorsOverlay playerIndicatorsOverlay;
-
-	@Inject
-	private PlayerIndicatorsMinimapOverlay playerIndicatorsMinimapOverlay;
+	private WarIndicatorMiniMapOverlay warIndicatorMinimapOverlay;
 
 	@Inject
 	private Client client;
 
-	@Inject
-	private ClanManager clanManager;
-
 	@Provides
-	PlayerIndicatorsConfig provideConfig(ConfigManager configManager)
+	WarIndicatorConfig provideConfig(ConfigManager configManager)
 	{
-		return configManager.getConfig(PlayerIndicatorsConfig.class);
+		return configManager.getConfig(WarIndicatorConfig.class);
 	}
 
 	@Override
 	public Collection<Overlay> getOverlays()
 	{
-		return Sets.newHashSet(playerIndicatorsOverlay, playerIndicatorsMinimapOverlay);
+		return Sets.newHashSet(warIndicatorOverlay, warIndicatorMinimapOverlay);
 	}
 
 	@Subscribe
@@ -111,10 +106,12 @@ public class PlayerIndicatorsPlugin extends Plugin
 			|| type == PLAYER_SEVENTH_OPTION.getId()
 			|| type == PLAYER_EIGTH_OPTION.getId())
 		{
-			final Player localPlayer = client.getLocalPlayer();
 			Player[] players = client.getCachedPlayers();
 			Player player = null;
 			String player2 = null;
+
+			String[] callers = config.getActiveCallers().split(", ");
+			String[] targets = config.getTargetedSnipes().split(", ");
 
 			if (identifier >= 0 && identifier < players.length)
 			{
@@ -127,66 +124,31 @@ public class PlayerIndicatorsPlugin extends Plugin
 				return;
 			}
 
-			int image = -1;
 			Color color = null;
 
-			if (config.highlightFriends() && player.isFriend())
+			if (config.highLightCallers() && ArrayUtils.contains(callers, player2))
 			{
-				color = config.getFriendColor();
-			}
-			else if (config.drawClanMemberNames() && player.isClanMember())
-			{
-				color = config.getClanMemberColor();
-
-				ClanMemberRank rank = clanManager.getRank(player.getName());
-				if (rank != UNRANKED)
-				{
-					image = clanManager.getIconNumber(rank);
-				}
-			}
-			else if (config.highlightTeamMembers() && player.getTeam() > 0 && localPlayer.getTeam() == player.getTeam())
-			{
-				color = config.getTeamMemberColor();
-			}
-			else if (config.highlightNonClanMembers() && !player.isClanMember())
-			{
-				color = config.getNonClanMemberColor();
-			}
-			else if (config.highlightNonClanMembers() && !player.isClanMember() && !config.hideNAP())
-			{
-				color = config.getNonClanMemberColor();
-			}
-			else if (config.highlightNonClanMembers() && !player.isClanMember() && config.hideNAP())
-			{
-				if (service.canAttack(player.getCombatLevel()))
-				{
-					color = config.getNonClanMemberColor();
-				}
+				color = config.getCallerColor();
 			}
 
-			if (image != -1 || color != null)
+			if (config.highlightSnipes() && ArrayUtils.contains(targets, player2))
+			{
+				color = config.getSnipeColor();
+			}
+
+			if (color != null)
 			{
 				MenuEntry[] menuEntries = client.getMenuEntries();
 				MenuEntry lastEntry = menuEntries[menuEntries.length - 1];
+				String target = lastEntry.getTarget();
 
-				if (color != null && config.colorPlayerMenu())
+				// strip out existing <col...
+				int idx = target.indexOf('>');
+				if (idx != -1)
 				{
-					// strip out existing <col...
-					String target = lastEntry.getTarget();
-					int idx = target.indexOf('>');
-					if (idx != -1)
-					{
-						target = target.substring(idx + 1);
-					}
-
-					lastEntry.setTarget("<col=" + Integer.toHexString(color.getRGB() & 0xFFFFFF) + ">" + target);
+					target = target.substring(idx + 1);
 				}
-
-				if (image != -1 && config.showClanRanks())
-				{
-					lastEntry.setTarget("<img=" + image + ">" + lastEntry.getTarget());
-				}
-
+				lastEntry.setTarget("<col=" + Integer.toHexString(color.getRGB() & 0xFFFFFF) + ">" + target);
 				client.setMenuEntries(menuEntries);
 			}
 		}

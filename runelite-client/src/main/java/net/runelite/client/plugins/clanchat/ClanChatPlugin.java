@@ -24,37 +24,69 @@
  */
 package net.runelite.client.plugins.clanchat;
 
+import com.google.common.collect.Sets;
 import com.google.common.eventbus.Subscribe;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
+
+import com.google.inject.Provides;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
-import net.runelite.api.ClanMemberRank;
-import net.runelite.api.Client;
-import net.runelite.api.GameState;
+import net.runelite.api.*;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.SetMessage;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
+import net.runelite.client.chat.ChatColorType;
+import net.runelite.client.chat.ChatMessageBuilder;
+import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ClanManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.task.Schedule;
 
 @PluginDescriptor(
-	name = "Clan Chat"
+		name = "Clan Chat"
 )
 @Slf4j
 public class ClanChatPlugin extends Plugin
 {
+	private final String joinClanChatMessage = "%s has joined the clan chat";
+	private final String leftClanChatMessage = "%s has left the clan chat";
+
 	@Inject
 	private Client client;
 
 	@Inject
 	private ClanManager clanManager;
 
+	@Inject
+	private ChatMessageManager chatMessageManager;
+
+	@Inject
+	private ClanChatConfig config;
+
+	private HashSet<ClanMember> previousMembersInClan;
+
+	@Provides
+	ClanChatConfig getConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(ClanChatConfig.class);
+	}
+
+	@Override
+	protected void startUp() throws Exception
+	{
+		previousMembersInClan = null;
+	}
+
 	@Schedule(
-		period = 600,
-		unit = ChronoUnit.MILLIS
+			period = 600,
+			unit = ChronoUnit.MILLIS
 	)
 	public void updateClanChatTitle()
 	{
@@ -93,10 +125,52 @@ public class ClanChatPlugin extends Plugin
 		{
 			int iconNumber = clanManager.getIconNumber(rank);
 			message.getMessageNode()
-				.setSender(message.getMessageNode().getSender() + " <img=" + iconNumber + ">");
+					.setSender(message.getMessageNode().getSender() + " <img=" + iconNumber + ">");
 			client.refreshChat();
 		}
 	}
 
+	@Subscribe
+	public void onGameTick(GameTick gameTick)
+	{
+		boolean isInClan = client.getLocalPlayer().isClanMember();
+
+		if (isInClan)
+		{
+			HashSet<ClanMember> currentMembers = new HashSet<>(Arrays.asList(client.getClanMembers()));
+			if (previousMembersInClan != null && config.showEnterAndLeaveMessages())
+			{
+				Sets.SetView<ClanMember> clanMembersThatJoined = Sets.difference(currentMembers, previousMembersInClan);
+				Sets.SetView<ClanMember> clanMembersThatLeft = Sets.difference(previousMembersInClan, currentMembers);
+
+				sendChatMessage(clanMembersThatJoined, true);
+				sendChatMessage(clanMembersThatLeft, false);
+			}
+			previousMembersInClan = currentMembers;
+			return;
+		}
+		previousMembersInClan = null;
+	}
+
+	private void sendChatMessage(Set<ClanMember> members, boolean newMembers)
+	{
+		String col = Integer.toHexString(config.getLAEC().getRGB() & 0xFFFFFF);
+		members.forEach(member ->
+		{
+			String chatMessage = newMembers ? String.format("<col=" + col + ">" + joinClanChatMessage + "</col>", member.getUsername())
+					: String.format("<col=" + col + ">" + leftClanChatMessage + "</col>", member.getUsername());
+
+			final String message = new ChatMessageBuilder()
+					.append(ChatColorType.HIGHLIGHT)
+					.append(chatMessage)
+					.build();
+
+			chatMessageManager.queue(
+					QueuedMessage.builder()
+							.type(ChatMessageType.CLANCHAT_INFO)
+							.runeLiteFormattedMessage(message)
+							.build());
+		});
+	}
 
 }
