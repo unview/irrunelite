@@ -24,10 +24,11 @@
  */
 package net.runelite.client.plugins.teamcapes;
 
-import java.awt.Dimension;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
+
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
@@ -36,9 +37,13 @@ import net.runelite.client.ui.overlay.components.PanelComponent;
 
 public class TeamCapesOverlay extends Overlay
 {
+	private final int MAX_CLAN_NAME_LENGTH = 35;
+	private final int MIN_PX_BETWEEN_NAME_COUNT = 4;
+
 	private final TeamCapesPlugin plugin;
 	private final TeamCapesConfig config;
 	private final PanelComponent panelComponent = new PanelComponent();
+	private Map<Integer, String> teamNames = new HashMap<>();
 
 	@Inject
 	TeamCapesOverlay(TeamCapesPlugin plugin, TeamCapesConfig config)
@@ -57,20 +62,70 @@ public class TeamCapesOverlay extends Overlay
 		{
 			return null;
 		}
-		panelComponent.getChildren().clear();
 
-		for (Map.Entry<Integer, Integer> team : teams.entrySet())
+		final FontMetrics metrics = graphics.getFontMetrics();
+
+		// Format w/ example (comma separated): teamcape#=TEAMNAME
+		// 26=Intense Redemption,30=FOE
+		teamNames.clear();
+		if (this.config.getCustomCapeNames().length() >= 3)
 		{
-			// Only display team capes that have a count greater than the configured minimum.
-			if (team.getValue() >= config.getMinimumCapeCount())
+			for (String teamName : this.config.getCustomCapeNames().split(","))
 			{
-				panelComponent.getChildren().add(LineComponent.builder()
-					.left("Team-" + Integer.toString(team.getKey()))
-					.right(Integer.toString(team.getValue()))
-					.build());
+				String[] values = teamName.split("=");
+				int capeNum;
+				String capeName;
+				try
+				{
+					capeNum = Integer.parseInt(values[0]);
+					capeName = values[1];
+				}
+
+				catch (NumberFormatException | ArrayIndexOutOfBoundsException e)
+				{
+					continue;
+				}
+
+				teamNames.put(capeNum, capeName);
 			}
 		}
 
+		panelComponent.getChildren().clear();
+		for (Map.Entry<Integer, Integer> team : teams.entrySet())
+		{
+			String capeName;
+
+			if (team.getValue() >= config.getMinimumCapeCount())
+			{
+				if (teamNames.containsKey(team.getKey()))
+				{
+					capeName = teamNames.get(team.getKey());
+
+					if (capeName.length() > MAX_CLAN_NAME_LENGTH)
+					{
+						capeName = capeName.substring(0, MAX_CLAN_NAME_LENGTH);
+						teamNames.replace(team.getKey(), capeName);
+					}
+
+					while (((FontMetrics) metrics).stringWidth(capeName) >=
+							(panelComponent.getWidth() -
+									metrics.stringWidth(Integer.toString(team.getValue())) -
+									PanelComponent.LEFT_BORDER - PanelComponent.RIGHT_BORDER -
+									MIN_PX_BETWEEN_NAME_COUNT))
+					{
+						capeName = capeName.substring(0, capeName.length() - 1);
+					}
+				}
+				else
+				{
+					capeName = "Team - ";
+				}
+				panelComponent.getChildren().add(LineComponent.builder()
+						.left(capeName + " - " + Integer.toString(team.getKey()))
+						.right(Integer.toString(team.getValue()))
+						.build());
+			}
+		}
 		return panelComponent.render(graphics);
 	}
 }

@@ -36,13 +36,31 @@ import net.runelite.client.config.ConfigItem;
 public interface TeamCapesConfig extends Config
 {
 	@ConfigItem(
+		position = 0,
 		keyName = "minimumCapeCount",
 		name = "Minimum Cape Count",
-		description = "Configures the minimum number of team capes which must be present before being displayed.",
-		position = 0
+		description = "Configures the minimum number of team capes which must be present before being displayed."
 	)
 	default int getMinimumCapeCount()
 	{
 		return 1;
 	}
+
+	@ConfigItem(
+			position = 1,
+			keyName = "customCapeNames",
+			name = "Custom Cape Names",
+			description = "Displays a custom team cape name.The format is cape#=TEAM NAME (comma seperated) Example: \"26=Intense Redemption, 30=FOE\""
+	)
+	default String getCustomCapeNames()
+	{
+		return "";
+	}
+
+	@ConfigItem(
+			keyName = "customCapeNames",
+			name = "",
+			description = ""
+	)
+	void setCustomCapeNames(String key);
 }
